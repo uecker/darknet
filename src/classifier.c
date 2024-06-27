@@ -32,7 +32,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
     int i;
 
     float avg_loss = -1;
-    float avg_contrastive_acc = 0;
+    //float avg_contrastive_acc = 0;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -143,7 +143,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
     int iter_topk = get_current_batch(net);
     float topk = 0;
 
-    int count = 0;
+    //int count = 0;
     double start, time_remaining, avg_time = -1, alpha_time = 0.01;
     start = what_time_is_it_now();
 
@@ -187,7 +187,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
             }
         }
 
-        int draw_precision = 0;
+        //int draw_precision = 0;
         if (calc_topk && (i >= calc_topk_for_each || i == net.max_batches)) {
             iter_topk = i;
             if (net.contrastive && l.type != SOFTMAX && l.type != COST) {
@@ -200,7 +200,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
                 topk = validate_classifier_single(datacfg, cfgfile, weightfile, &net, topk_data); // calc TOP-n
                 printf("\n accuracy %s = %f \n", topk_buff, topk);
             }
-            draw_precision = 1;
+            // draw_precision = 1;
         }
 
         time_remaining = ((net.max_batches - i) / ngpus) * (what_time_is_it_now() - start) / 60 / 60;
@@ -759,11 +759,11 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
     char **names = get_labels(name_list);
     clock_t time;
     int* indexes = (int*)xcalloc(top, sizeof(int));
-    char buff[256];
+    char buff[256] = { 0 };
     char *input = buff;
     while(1){
         if(filename){
-            strncpy(input, filename, 256);
+            strncpy(input, filename, 255);
         }else{
             printf("Enter Image Path: ");
             fflush(stdout);
@@ -852,14 +852,14 @@ void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *fi
 
     int i = 0;
     char **names = get_labels(name_list);
-    clock_t time;
+    // clock_t time;
     int* indexes = (int*)xcalloc(top, sizeof(int));
-    char buff[256];
+    char buff[256] = { 0 };
     char *input = buff;
     //int size = net.w;
     while(1){
         if(filename){
-            strncpy(input, filename, 256);
+            strncpy(input, filename, sizeof buff - 1);
         }else{
             printf("Enter Image Path: ");
             fflush(stdout);
