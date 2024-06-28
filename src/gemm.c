@@ -558,7 +558,7 @@ static inline float _mm256_extract_float32(__m256 a, const int index) {
 
 static inline float _dn_castu32_f32(uint32_t a) {
     float b;
-    _Static_assert(sizeof(a) == sizeof(b), "");
+    static_assert(sizeof(a) == sizeof(b), "");
     memcpy(&b, &a, sizeof(b));
     return b;
 }

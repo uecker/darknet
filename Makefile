@@ -96,8 +96,10 @@ LDFLAGS= -lm -pthread
 COMMON= -Iinclude/ -I3rdparty/stb/include
 CFLAGS=-Wall -Wno-unused-parameter -Wno-unknown-pragmas -fPIC -rdynamic
 
-ifneq ($(USE_CPP), 1)
+ifeq ($(USE_CPP), 1)
 # C is not C++
+CFLAGS+=-fpermissive -Wno-write-strings
+else
 CFLAGS+=-Wextra
 endif
 

@@ -64,14 +64,14 @@ layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int 
     l.delta_gpu = cuda_make_array(l.delta, batch*l.outputs);
 
     free(l.output);
-    if (cudaSuccess == cudaHostAlloc((void*)&l.output, batch*l.outputs*sizeof(float), cudaHostRegisterMapped)) l.output_pinned = 1;
+    if (cudaSuccess == cudaHostAlloc((void**)&l.output, batch*l.outputs*sizeof(float), cudaHostRegisterMapped)) l.output_pinned = 1;
     else {
         cudaGetLastError(); // reset CUDA-error
         l.output = (float*)xcalloc(batch * l.outputs, sizeof(float));
     }
 
     free(l.delta);
-    if (cudaSuccess == cudaHostAlloc((void*)&l.delta, batch*l.outputs*sizeof(float), cudaHostRegisterMapped)) l.delta_pinned = 1;
+    if (cudaSuccess == cudaHostAlloc((void**)&l.delta, batch*l.outputs*sizeof(float), cudaHostRegisterMapped)) l.delta_pinned = 1;
     else {
         cudaGetLastError(); // reset CUDA-error
         l.delta = (float*)xcalloc(batch * l.outputs, sizeof(float));
@@ -102,7 +102,7 @@ void resize_yolo_layer(layer *l, int w, int h)
 #ifdef GPU
     if (l->output_pinned) {
         CHECK_CUDA(cudaFreeHost(l->output));
-        if (cudaSuccess != cudaHostAlloc((void*)&l->output, l->batch*l->outputs * sizeof(float), cudaHostRegisterMapped)) {
+        if (cudaSuccess != cudaHostAlloc((void**)&l->output, l->batch*l->outputs * sizeof(float), cudaHostRegisterMapped)) {
             cudaGetLastError(); // reset CUDA-error
             l->output = (float*)xcalloc(l->batch * l->outputs, sizeof(float));
             l->output_pinned = 0;
@@ -111,7 +111,7 @@ void resize_yolo_layer(layer *l, int w, int h)
 
     if (l->delta_pinned) {
         CHECK_CUDA(cudaFreeHost(l->delta));
-        if (cudaSuccess != cudaHostAlloc((void*)&l->delta, l->batch*l->outputs * sizeof(float), cudaHostRegisterMapped)) {
+        if (cudaSuccess != cudaHostAlloc((void**)&l->delta, l->batch*l->outputs * sizeof(float), cudaHostRegisterMapped)) {
             cudaGetLastError(); // reset CUDA-error
             l->delta = (float*)xcalloc(l->batch * l->outputs, sizeof(float));
             l->delta_pinned = 0;
