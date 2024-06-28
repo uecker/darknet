@@ -1106,3 +1106,11 @@ bool is_live_stream(const char * path){
     const char *url_schema = "://";
     return (NULL != strstr(path, url_schema));
 }
+
+double get_time_point(void)
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * (double)1000000 + tv.tv_usec;
+}
+

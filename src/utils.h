@@ -109,6 +109,8 @@ int make_directory(char *path, int mode);
 unsigned long custom_hash(char *str);
 bool is_live_stream(const char * path);
 
+double get_time_point(void);
+
 #define max_val_cmp(a,b) (((a) > (b)) ? (a) : (b))
 #define min_val_cmp(a,b) (((a) < (b)) ? (a) : (b))
 
