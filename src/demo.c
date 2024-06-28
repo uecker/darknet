@@ -15,9 +15,10 @@
 #include <sys/time.h>
 #endif
 
-#ifdef OPENCV
+#include <unistd.h>
+#include <pthread.h>
 
-#include "http_stream.h"
+#ifdef OPENCV
 
 static char **demo_names;
 static image **demo_alphabet;
@@ -47,22 +48,22 @@ mat_cv* in_img;
 mat_cv* det_img;
 mat_cv* show_img;
 
-static volatile int flag_exit;
+static _Atomic int flag_exit;
 static int letter_box = 0;
 
 static const int thread_wait_ms = 1;
-static volatile int run_fetch_in_thread = 0;
-static volatile int run_detect_in_thread = 0;
+static _Atomic int run_fetch_in_thread = 0;
+static _Atomic int run_detect_in_thread = 0;
 
 
 void *fetch_in_thread(void *ptr)
 {
-    while (!custom_atomic_load_int(&flag_exit)) {
-        while (!custom_atomic_load_int(&run_fetch_in_thread)) {
-            if (custom_atomic_load_int(&flag_exit)) return 0;
+    while (!flag_exit) {
+        while (!run_fetch_in_thread) {
+            if (flag_exit) return 0;
             if (demo_skip_frame)
                 consume_frame(cap);
-            this_thread_yield();
+            sched_yield();
         }
         int dont_close_stream = 0;    // set 1 if your IP-camera periodically turns off and turns on video-stream
         if (letter_box)
@@ -71,30 +72,30 @@ void *fetch_in_thread(void *ptr)
             in_s = get_image_from_stream_resize(cap, net.w, net.h, net.c, &in_img, dont_close_stream);
         if (!in_s.data) {
             printf("Stream closed.\n");
-            custom_atomic_store_int(&flag_exit, 1);
-            custom_atomic_store_int(&run_fetch_in_thread, 0);
+            flag_exit = 1;
+            run_fetch_in_thread = 0;
             return 0;
         }
         //in_s = resize_image(in, net.w, net.h);
 
-        custom_atomic_store_int(&run_fetch_in_thread, 0);
+        run_fetch_in_thread = 0;
     }
     return 0;
 }
 
 void *fetch_in_thread_sync(void *ptr)
 {
-    custom_atomic_store_int(&run_fetch_in_thread, 1);
-    while (custom_atomic_load_int(&run_fetch_in_thread)) this_thread_sleep_for(thread_wait_ms);
+    run_fetch_in_thread = 1;
+    while (run_fetch_in_thread) usleep(thread_wait_ms * 1000);
     return 0;
 }
 
 void *detect_in_thread(void *ptr)
 {
-    while (!custom_atomic_load_int(&flag_exit)) {
-        while (!custom_atomic_load_int(&run_detect_in_thread)) {
-            if (custom_atomic_load_int(&flag_exit)) return 0;
-            this_thread_yield();
+    while (!flag_exit) {
+        while (!run_detect_in_thread) {
+            if (flag_exit) return 0;
+            sched_yield();
         }
 
         // layer l = net.layers[net.n - 1];
@@ -117,7 +118,7 @@ void *detect_in_thread(void *ptr)
         //    else diounms_sort(dets, nboxes, l.classes, nms, l.nms_kind, l.beta_nms);
         //}
 
-        custom_atomic_store_int(&run_detect_in_thread, 0);
+        run_detect_in_thread = 0;
     }
 
     return 0;
@@ -125,8 +126,8 @@ void *detect_in_thread(void *ptr)
 
 void *detect_in_thread_sync(void *ptr)
 {
-    custom_atomic_store_int(&run_detect_in_thread, 1);
-    while (custom_atomic_load_int(&run_detect_in_thread)) this_thread_sleep_for(thread_wait_ms);
+    run_detect_in_thread = 1;
+    while (run_detect_in_thread) usleep(thread_wait_ms * 1000);
     return 0;
 }
 
@@ -214,10 +215,12 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
 
     flag_exit = 0;
 
-    custom_thread_t fetch_thread = NULL;
-    custom_thread_t detect_thread = NULL;
-    if (custom_create_thread(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
-    if (custom_create_thread(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
+    pthread_t fetch_thread;
+    pthread_t detect_thread;
+    if (pthread_create(&fetch_thread, 0, fetch_in_thread, 0))
+	    error("Thread creation failed", DARKNET_LOC);
+    if (pthread_create(&detect_thread, 0, detect_in_thread, 0))
+	    error("Thread creation failed", DARKNET_LOC);
 
     fetch_in_thread_sync(0); //fetch_in_thread(0);
     det_img = in_img;
@@ -260,7 +263,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
         //'W', 'M', 'V', '2'
     }
 
-    int send_http_post_once = 0;
+//    int send_http_post_once = 0;
     const double start_time_lim = get_time_point();
     double before = get_time_point();
     double start_time = get_time_point();
@@ -274,10 +277,10 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
             const float nms = .45;    // 0.4F
             int local_nboxes = nboxes;
             detection *local_dets = dets;
-            this_thread_yield();
+            sched_yield();
 
-            if (!benchmark) custom_atomic_store_int(&run_fetch_in_thread, 1); // if (custom_create_thread(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
-            custom_atomic_store_int(&run_detect_in_thread, 1); // if (custom_create_thread(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
+            if (!benchmark) run_fetch_in_thread = 1; // if (custom_create_thread(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
+            run_detect_in_thread = 1; // if (custom_create_thread(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed", DARKNET_LOC);
 
             //if (nms) do_nms_obj(local_dets, local_nboxes, l.classes, nms);    // bad results
             if (nms) {
@@ -292,11 +295,13 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
             printf("Objects:\n\n");
 
             ++frame_id;
+
+#if 0
             if (demo_json_port > 0) {
                 int timeout = 400000;
                 send_json(local_dets, local_nboxes, l.classes, demo_names, frame_id, demo_json_port, timeout);
             }
-
+#endif
             if (json_file_output) {
                 if (json_buf) {
                     char *tmp = ", \n";
@@ -306,7 +311,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
                 fwrite(json_buf, sizeof(char), strlen(json_buf), json_file);
                 free(json_buf);
             }
-
+#if 0
             //char *http_post_server = "webhook.site/898bbd9b-0ddd-49cf-b81d-1f56be98d870";
             if (http_post_host && !send_http_post_once) {
                 int timeout = 3;            // 3 seconds
@@ -317,7 +322,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
                     if (time_limit_sec > 0) send_http_post_once = 1;
                 }
             }
-
+#endif
             if (!benchmark && !dontdraw_bbox) draw_detections_cv_v3(show_img, local_dets, local_nboxes, demo_thresh, demo_names, demo_alphabet, demo_classes, demo_ext_output);
             free_detections(local_dets, local_nboxes);
 
@@ -344,7 +349,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
                 sprintf(buff, "%s_%08d.jpg", prefix, count);
                 if(show_img) save_cv_jpg(show_img, buff);
             }
-
+#if 0
             // if you run it with param -mjpeg_port 8090  then open URL in your web-browser: http://localhost:8090
             if (mjpeg_port > 0 && show_img) {
                 int port = mjpeg_port;
@@ -352,21 +357,21 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
                 int jpeg_quality = 40;    // 1 - 100
                 send_mjpeg(show_img, port, timeout, jpeg_quality);
             }
-
+#endif
             // save video file
             if (output_video_writer && show_img) {
                 write_frame_cv(output_video_writer, show_img);
                 printf("\n cvWriteFrame \n");
             }
 
-            while (custom_atomic_load_int(&run_detect_in_thread)) {
-                if(avg_fps > 50) this_thread_yield();
-                else this_thread_sleep_for(thread_wait_ms);   // custom_join(detect_thread, 0);
+            while (run_detect_in_thread) {
+                if(avg_fps > 50) sched_yield();
+                else usleep(thread_wait_ms * 1000);   // custom_join(detect_thread, 0);
             }
             if (!benchmark) {
-                while (custom_atomic_load_int(&run_fetch_in_thread)) {
-                    if (avg_fps > 50) this_thread_yield();
-                    else this_thread_sleep_for(thread_wait_ms);   // custom_join(fetch_thread, 0);
+                while (run_fetch_in_thread) {
+                    if (avg_fps > 50) sched_yield();
+                    else usleep(thread_wait_ms * 1000);   // custom_join(fetch_thread, 0);
                 }
                 free_image(det_s);
             }
@@ -418,10 +423,10 @@ void demo(char *cfgfile, char *weightfile, float thresh, float hier_thresh, int 
         fwrite(tmp, sizeof(char), strlen(tmp), json_file);
         fclose(json_file);
     }
-    this_thread_sleep_for(thread_wait_ms);
+    usleep(thread_wait_ms * 1000);
 
-    custom_join(detect_thread, 0);
-    custom_join(fetch_thread, 0);
+    pthread_join(detect_thread, 0);
+    pthread_join(fetch_thread, 0);
 
     // free memory
     free_image(in_s);

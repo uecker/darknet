@@ -57,11 +57,11 @@ deconvolutional_layer make_deconvolutional_layer(int batch, int h, int w, int c,
     l.stride = stride;
     l.size = size;
 
-    l.weights = (float*)xcalloc(c * n * size * size, sizeof(float));
-    l.weight_updates = (float*)xcalloc(c * n * size * size, sizeof(float));
+    l.weights = xcalloc(c * n * size * size, sizeof(float));
+    l.weight_updates = xcalloc(c * n * size * size, sizeof(float));
 
-    l.biases = (float*)xcalloc(n, sizeof(float));
-    l.bias_updates = (float*)xcalloc(n, sizeof(float));
+    l.biases = xcalloc(n, sizeof(float));
+    l.bias_updates = xcalloc(n, sizeof(float));
     float scale = 1./sqrt(size*size*c);
     for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_normal();
     for(i = 0; i < n; ++i){
@@ -76,9 +76,9 @@ deconvolutional_layer make_deconvolutional_layer(int batch, int h, int w, int c,
     l.outputs = l.out_w * l.out_h * l.out_c;
     l.inputs = l.w * l.h * l.c;
 
-    l.col_image = (float*)xcalloc(h * w * size * size * n, sizeof(float));
-    l.output = (float*)xcalloc(l.batch * out_h * out_w * n, sizeof(float));
-    l.delta = (float*)xcalloc(l.batch * out_h * out_w * n, sizeof(float));
+    l.col_image = xcalloc(h * w * size * size * n, sizeof(float));
+    l.output = xcalloc(l.batch * out_h * out_w * n, sizeof(float));
+    l.delta = xcalloc(l.batch * out_h * out_w * n, sizeof(float));
 
     l.forward = forward_deconvolutional_layer;
     l.backward = backward_deconvolutional_layer;
@@ -110,13 +110,13 @@ void resize_deconvolutional_layer(deconvolutional_layer *l, int h, int w)
     int out_h = deconvolutional_out_height(*l);
     int out_w = deconvolutional_out_width(*l);
 
-    l->col_image = (float*)xrealloc(l->col_image,
+    l->col_image = xrealloc(l->col_image,
                                 out_h*out_w*l->size*l->size*l->c*sizeof(float));
-    l->output = (float*)xrealloc(l->output,
+    l->output = xrealloc(l->output,
                                 l->batch*out_h * out_w * l->n*sizeof(float));
-    l->delta = (float*)xrealloc(l->delta,
+    l->delta = xrealloc(l->delta,
                                 l->batch*out_h * out_w * l->n*sizeof(float));
-    #ifdef GPU
+#ifdef GPU
     cuda_free(l->col_image_gpu);
     cuda_free(l->delta_gpu);
     cuda_free(l->output_gpu);
@@ -124,7 +124,7 @@ void resize_deconvolutional_layer(deconvolutional_layer *l, int h, int w)
     l->col_image_gpu = cuda_make_array(l->col_image, out_h*out_w*l->size*l->size*l->c);
     l->delta_gpu = cuda_make_array(l->delta, l->batch*out_h*out_w*l->n);
     l->output_gpu = cuda_make_array(l->output, l->batch*out_h*out_w*l->n);
-    #endif
+#endif
 }
 
 void forward_deconvolutional_layer(const deconvolutional_layer l, network_state state)

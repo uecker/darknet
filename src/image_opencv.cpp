@@ -446,13 +446,6 @@ extern "C" void make_window(char *name, int w, int h, int fullscreen)
 }
 // ----------------------------------------
 
-static float get_pixel(image m, int x, int y, int c)
-{
-    assert(x < m.w && y < m.h && c < m.c);
-    return m.data[c*m.h*m.w + y*m.w + x];
-}
-// ----------------------------------------
-
 extern "C" void show_image_cv(image p, const char *name)
 {
     try {

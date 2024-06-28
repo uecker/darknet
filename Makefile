@@ -1,7 +1,6 @@
 GPU=0
 CUDNN=0
 CUDNN_HALF=0
-OPENCV=0
 AVX=0
 OPENMP=0
 LIBSO=0
@@ -83,25 +82,13 @@ LIBNAMESO=libdarknet.so
 APPNAMESO=uselib
 endif
 
-ifeq ($(USE_CPP), 1)
-CC=g++
-else
-CC=gcc
-endif
-
 CPP=g++ -std=c++11
 NVCC=nvcc
 OPTS=-Ofast
 LDFLAGS= -lm -pthread
 COMMON= -Iinclude/ -I3rdparty/stb/include
-CFLAGS=-Wall -Wno-unused-parameter -Wno-unknown-pragmas -fPIC -rdynamic
+CFLAGS=-Wextra -Wall -Wno-unused-parameter -Wno-unknown-pragmas -fPIC -rdynamic
 
-ifeq ($(USE_CPP), 1)
-# C is not C++
-CFLAGS+=-fpermissive -Wno-write-strings
-else
-CFLAGS+=-Wextra
-endif
 
 ifeq ($(DEBUG), 1)
 #OPTS= -O0 -g
@@ -118,13 +105,6 @@ CFLAGS+=$(OPTS)
 
 ifneq (,$(findstring MSYS_NT,$(OS)))
 LDFLAGS+=-lws2_32
-endif
-
-ifeq ($(OPENCV), 1)
-COMMON+= -DOPENCV
-CFLAGS+= -DOPENCV
-LDFLAGS+= `pkg-config --libs opencv4 2> /dev/null || pkg-config --libs opencv`
-COMMON+= `pkg-config --cflags opencv4 2> /dev/null || pkg-config --cflags opencv`
 endif
 
 ifeq ($(OPENMP), 1)

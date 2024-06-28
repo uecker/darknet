@@ -1,7 +1,6 @@
 #include "batchnorm_layer.h"
 #include "blas.h"
 #include "utils.h"
-#include <stdio.h>
 
 layer make_batchnorm_layer(int batch, int w, int h, int c, int train)
 {
@@ -15,32 +14,32 @@ layer make_batchnorm_layer(int batch, int w, int h, int c, int train)
     layer.c = layer.out_c = c;
 
     layer.n = layer.c;
-    layer.output = (float*)xcalloc(h * w * c * batch, sizeof(float));
-    layer.delta = (float*)xcalloc(h * w * c * batch, sizeof(float));
+    layer.output = xcalloc(h * w * c * batch, sizeof(float));
+    layer.delta = xcalloc(h * w * c * batch, sizeof(float));
     layer.inputs = w*h*c;
     layer.outputs = layer.inputs;
 
-    layer.biases = (float*)xcalloc(c, sizeof(float));
-    layer.bias_updates = (float*)xcalloc(c, sizeof(float));
+    layer.biases = xcalloc(c, sizeof(float));
+    layer.bias_updates = xcalloc(c, sizeof(float));
 
-    layer.scales = (float*)xcalloc(c, sizeof(float));
-    layer.scale_updates = (float*)xcalloc(c, sizeof(float));
+    layer.scales = xcalloc(c, sizeof(float));
+    layer.scale_updates = xcalloc(c, sizeof(float));
     int i;
     for(i = 0; i < c; ++i){
         layer.scales[i] = 1;
     }
 
-    layer.mean = (float*)xcalloc(c, sizeof(float));
-    layer.variance = (float*)xcalloc(c, sizeof(float));
+    layer.mean = xcalloc(c, sizeof(float));
+    layer.variance = xcalloc(c, sizeof(float));
 
-    layer.rolling_mean = (float*)xcalloc(c, sizeof(float));
-    layer.rolling_variance = (float*)xcalloc(c, sizeof(float));
+    layer.rolling_mean = xcalloc(c, sizeof(float));
+    layer.rolling_variance = xcalloc(c, sizeof(float));
 
-    layer.mean_delta = (float*)xcalloc(c, sizeof(float));
-    layer.variance_delta = (float*)xcalloc(c, sizeof(float));
+    layer.mean_delta = xcalloc(c, sizeof(float));
+    layer.variance_delta = xcalloc(c, sizeof(float));
 
-    layer.x = (float*)xcalloc(layer.batch*layer.outputs, sizeof(float));
-    layer.x_norm = (float*)xcalloc(layer.batch*layer.outputs, sizeof(float));
+    layer.x = xcalloc(layer.batch*layer.outputs, sizeof(float));
+    layer.x_norm = xcalloc(layer.batch*layer.outputs, sizeof(float));
 
     layer.forward = forward_batchnorm_layer;
     layer.backward = backward_batchnorm_layer;
@@ -154,8 +153,8 @@ void resize_batchnorm_layer(layer *l, int w, int h)
 
     const int output_size = l->outputs * l->batch;
 
-    l->output = (float*)realloc(l->output, output_size * sizeof(float));
-    l->delta = (float*)realloc(l->delta, output_size * sizeof(float));
+    l->output = realloc(l->output, output_size * sizeof(float));
+    l->delta = realloc(l->delta, output_size * sizeof(float));
 
 #ifdef GPU
     cuda_free(l->output_gpu);

@@ -16,7 +16,6 @@ int gpu_index = 0;
 #include <stdlib.h>
 #include <time.h>
 #include <cuda.h>
-#include <stdio.h>
 
 #ifndef USE_CMAKE_LIBS
 #pragma comment(lib, "cuda.lib")
@@ -377,7 +376,7 @@ void pre_allocate_pinned_memory(const size_t size)
 
     pthread_mutex_lock(&mutex_pinned);
     if (!pinned_ptr) {
-        pinned_ptr = (float **)calloc(num_of_blocks, sizeof(float *));
+        pinned_ptr = calloc(num_of_blocks, sizeof(float *));
         if(!pinned_ptr) error("calloc failed in pre_allocate()", DARKNET_LOC);
 
         printf("pre_allocate: size = %zu MB, num_of_blocks = %d, block_size = %zu MB \n",
@@ -436,7 +435,7 @@ float *cuda_make_array_pinned_preallocated(float *x, size_t n)
             pinned_num_of_blocks++;
             pinned_block_id = pinned_num_of_blocks - 1;
             pinned_index = 0;
-            pinned_ptr = (float **)realloc(pinned_ptr, pinned_num_of_blocks * sizeof(float *));
+            pinned_ptr = realloc(pinned_ptr, pinned_num_of_blocks * sizeof(float *));
             cudaError_t status = cudaHostAlloc((void **)&pinned_ptr[pinned_block_id], pinned_block_size, cudaHostRegisterMapped);
             if (status != cudaSuccess) fprintf(stderr, " Can't pre-allocate CUDA-pinned buffer on CPU-RAM \n");
             CHECK_CUDA(status);
@@ -518,7 +517,7 @@ void cuda_random(float *x_gpu, size_t n)
 
 float cuda_compare(float *x_gpu, float *x, size_t n, char *s)
 {
-    float* tmp = (float*)xcalloc(n, sizeof(float));
+    float* tmp = xcalloc(n, sizeof(float));
     cuda_pull_array(x_gpu, tmp, n);
     //int i;
     //for(i = 0; i < n; ++i) printf("%f %f\n", tmp[i], x[i]);

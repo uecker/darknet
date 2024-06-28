@@ -554,15 +554,15 @@ convolutional_layer make_convolutional_layer(int batch, int steps, int h, int w,
         l.bias_updates = l.share_layer->bias_updates;
     }
     else {
-        l.weights = (float*)xcalloc(l.nweights, sizeof(float));
-        l.biases = (float*)xcalloc(n, sizeof(float));
+        l.weights = xcalloc(l.nweights, sizeof(float));
+        l.biases = xcalloc(n, sizeof(float));
 
         if (train) {
-            l.weight_updates = (float*)xcalloc(l.nweights, sizeof(float));
-            l.bias_updates = (float*)xcalloc(n, sizeof(float));
+            l.weight_updates = xcalloc(l.nweights, sizeof(float));
+            l.bias_updates = xcalloc(n, sizeof(float));
 
-            l.weights_ema = (float*)xcalloc(l.nweights, sizeof(float));
-            l.biases_ema = (float*)xcalloc(n, sizeof(float));
+            l.weights_ema = xcalloc(l.nweights, sizeof(float));
+            l.biases_ema = xcalloc(n, sizeof(float));
         }
     }
 
@@ -583,38 +583,38 @@ convolutional_layer make_convolutional_layer(int batch, int steps, int h, int w,
     l.inputs = l.w * l.h * l.c;
     l.activation = activation;
 
-    l.output = (float*)xcalloc(total_batch*l.outputs, sizeof(float));
+    l.output = xcalloc(total_batch*l.outputs, sizeof(float));
 #ifndef GPU
-    if (train) l.delta = (float*)xcalloc(total_batch*l.outputs, sizeof(float));
+    if (train) l.delta = xcalloc(total_batch*l.outputs, sizeof(float));
 #endif  // not GPU
 
     l.forward = forward_convolutional_layer;
     l.backward = backward_convolutional_layer;
     l.update = update_convolutional_layer;
     if(binary){
-        l.binary_weights = (float*)xcalloc(l.nweights, sizeof(float));
-        l.cweights = (char*)xcalloc(l.nweights, sizeof(char));
-        l.scales = (float*)xcalloc(n, sizeof(float));
+        l.binary_weights = xcalloc(l.nweights, sizeof(float));
+        l.cweights = xcalloc(l.nweights, sizeof(char));
+        l.scales = xcalloc(n, sizeof(float));
     }
     if(xnor){
-        l.binary_weights = (float*)xcalloc(l.nweights, sizeof(float));
-        l.binary_input = (float*)xcalloc(l.inputs * l.batch, sizeof(float));
+        l.binary_weights = xcalloc(l.nweights, sizeof(float));
+        l.binary_input = xcalloc(l.inputs * l.batch, sizeof(float));
 
         int align = 32;// 8;
         int src_align = l.out_h*l.out_w;
         l.bit_align = src_align + (align - src_align % align);
 
-        l.mean_arr = (float*)xcalloc(l.n, sizeof(float));
+        l.mean_arr = xcalloc(l.n, sizeof(float));
 
         const size_t new_c = l.c / 32;
         size_t in_re_packed_input_size = new_c * l.w * l.h + 1;
-        l.bin_re_packed_input = (uint32_t*)xcalloc(in_re_packed_input_size, sizeof(uint32_t));
+        l.bin_re_packed_input = xcalloc(in_re_packed_input_size, sizeof(uint32_t));
 
         l.lda_align = 256;  // AVX2
         int k = l.size*l.size*l.c;
         size_t k_aligned = k + (l.lda_align - k%l.lda_align);
         size_t t_bit_input_size = k_aligned * l.bit_align / 8;
-        l.t_bit_input = (char*)xcalloc(t_bit_input_size, sizeof(char));
+        l.t_bit_input = xcalloc(t_bit_input_size, sizeof(char));
     }
 
     if(batch_normalize){
@@ -629,44 +629,44 @@ convolutional_layer make_convolutional_layer(int batch, int steps, int h, int w,
             l.rolling_variance = l.share_layer->rolling_variance;
         }
         else {
-            l.scales = (float*)xcalloc(n, sizeof(float));
+            l.scales = xcalloc(n, sizeof(float));
             for (i = 0; i < n; ++i) {
                 l.scales[i] = 1;
             }
             if (train) {
-                l.scales_ema = (float*)xcalloc(n, sizeof(float));
-                l.scale_updates = (float*)xcalloc(n, sizeof(float));
+                l.scales_ema = xcalloc(n, sizeof(float));
+                l.scale_updates = xcalloc(n, sizeof(float));
 
-                l.mean = (float*)xcalloc(n, sizeof(float));
-                l.variance = (float*)xcalloc(n, sizeof(float));
+                l.mean = xcalloc(n, sizeof(float));
+                l.variance = xcalloc(n, sizeof(float));
 
-                l.mean_delta = (float*)xcalloc(n, sizeof(float));
-                l.variance_delta = (float*)xcalloc(n, sizeof(float));
+                l.mean_delta = xcalloc(n, sizeof(float));
+                l.variance_delta = xcalloc(n, sizeof(float));
             }
-            l.rolling_mean = (float*)xcalloc(n, sizeof(float));
-            l.rolling_variance = (float*)xcalloc(n, sizeof(float));
+            l.rolling_mean = xcalloc(n, sizeof(float));
+            l.rolling_variance = xcalloc(n, sizeof(float));
         }
 
 #ifndef GPU
         if (train) {
-            l.x = (float*)xcalloc(total_batch * l.outputs, sizeof(float));
-            l.x_norm = (float*)xcalloc(total_batch * l.outputs, sizeof(float));
+            l.x = xcalloc(total_batch * l.outputs, sizeof(float));
+            l.x_norm = xcalloc(total_batch * l.outputs, sizeof(float));
         }
 #endif  // not GPU
     }
 
 #ifndef GPU
-    if (l.activation == SWISH || l.activation == MISH || l.activation == HARD_MISH) l.activation_input = (float*)calloc(total_batch*l.outputs, sizeof(float));
+    if (l.activation == SWISH || l.activation == MISH || l.activation == HARD_MISH) l.activation_input = calloc(total_batch*l.outputs, sizeof(float));
 #endif  // not GPU
 
     if(adam){
         l.adam = 1;
-        l.m = (float*)xcalloc(l.nweights, sizeof(float));
-        l.v = (float*)xcalloc(l.nweights, sizeof(float));
-        l.bias_m = (float*)xcalloc(n, sizeof(float));
-        l.scale_m = (float*)xcalloc(n, sizeof(float));
-        l.bias_v = (float*)xcalloc(n, sizeof(float));
-        l.scale_v = (float*)xcalloc(n, sizeof(float));
+        l.m = xcalloc(l.nweights, sizeof(float));
+        l.v = xcalloc(l.nweights, sizeof(float));
+        l.bias_m = xcalloc(n, sizeof(float));
+        l.scale_m = xcalloc(n, sizeof(float));
+        l.bias_v = xcalloc(n, sizeof(float));
+        l.scale_v = xcalloc(n, sizeof(float));
     }
 
 #ifdef GPU
@@ -800,7 +800,7 @@ convolutional_layer make_convolutional_layer(int batch, int steps, int h, int w,
 
     if (l.antialiasing) {
         printf("AA:  ");
-        l.input_layer = (layer*)calloc(1, sizeof(layer));
+        l.input_layer = calloc(1, sizeof(layer));
         int blur_size = 3;
         int blur_pad = blur_size / 2;
         if (l.antialiasing == 2) {
@@ -903,13 +903,13 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
     l->inputs = l->w * l->h * l->c;
 
 
-    l->output = (float*)xrealloc(l->output, total_batch * l->outputs * sizeof(float));
+    l->output = xrealloc(l->output, total_batch * l->outputs * sizeof(float));
     if (l->train) {
-        l->delta = (float*)xrealloc(l->delta, total_batch * l->outputs * sizeof(float));
+        l->delta = xrealloc(l->delta, total_batch * l->outputs * sizeof(float));
 
         if (l->batch_normalize) {
-            l->x = (float*)xrealloc(l->x, total_batch * l->outputs * sizeof(float));
-            l->x_norm = (float*)xrealloc(l->x_norm, total_batch * l->outputs * sizeof(float));
+            l->x = xrealloc(l->x, total_batch * l->outputs * sizeof(float));
+            l->x_norm = xrealloc(l->x_norm, total_batch * l->outputs * sizeof(float));
         }
     }
 
@@ -917,7 +917,7 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
         //l->binary_input = realloc(l->inputs*l->batch, sizeof(float));
     }
 
-    if (l->activation == SWISH || l->activation == MISH || l->activation == HARD_MISH) l->activation_input = (float*)realloc(l->activation_input, total_batch*l->outputs * sizeof(float));
+    if (l->activation == SWISH || l->activation == MISH || l->activation == HARD_MISH) l->activation_input = realloc(l->activation_input, total_batch*l->outputs * sizeof(float));
 #ifdef GPU
     if (old_w < w || old_h < h || l->dynamic_minibatch) {
         if (l->train) {
@@ -1444,8 +1444,8 @@ void assisted_excitation_forward(convolutional_layer l, network_state state)
     //printf("\n epoch = %f, alpha = %f, seen = %d, max_batches = %d, train_images_num = %d \n",
     //    epoch, alpha, (*state.net.seen), state.net.max_batches, state.net.train_images_num);
 
-    float *a_avg = (float *)xcalloc(l.out_w * l.out_h * l.batch, sizeof(float));
-    float *g = (float *)xcalloc(l.out_w * l.out_h * l.batch, sizeof(float));
+    float *a_avg = xcalloc(l.out_w * l.out_h * l.batch, sizeof(float));
+    float *g = xcalloc(l.out_w * l.out_h * l.batch, sizeof(float));
 
     int b;
     int w, h, c;
@@ -1654,7 +1654,7 @@ void rescale_weights(convolutional_layer l, float scale, float trans)
 
 image *get_weights(convolutional_layer l)
 {
-    image *weights = (image *)xcalloc(l.n, sizeof(image));
+    image *weights = xcalloc(l.n, sizeof(image));
     int i;
     for (i = 0; i < l.n; ++i) {
         weights[i] = copy_image(get_convolutional_weight(l, i));

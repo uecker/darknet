@@ -2,10 +2,6 @@
 #include "utils.h"
 #include "dark_cuda.h"
 #include "blas.h"
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 COST_TYPE get_cost_type(char *s)
 {
@@ -41,9 +37,9 @@ cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float sca
     l.inputs = inputs;
     l.outputs = inputs;
     l.cost_type = cost_type;
-    l.delta = (float*)xcalloc(inputs * batch, sizeof(float));
-    l.output = (float*)xcalloc(inputs * batch, sizeof(float));
-    l.cost = (float*)xcalloc(1, sizeof(float));
+    l.delta = xcalloc(inputs * batch, sizeof(float));
+    l.output = xcalloc(inputs * batch, sizeof(float));
+    l.cost = xcalloc(1, sizeof(float));
 
     l.forward = forward_cost_layer;
     l.backward = backward_cost_layer;
@@ -61,8 +57,8 @@ void resize_cost_layer(cost_layer *l, int inputs)
 {
     l->inputs = inputs;
     l->outputs = inputs;
-    l->delta = (float*)xrealloc(l->delta, inputs * l->batch * sizeof(float));
-    l->output = (float*)xrealloc(l->output, inputs * l->batch * sizeof(float));
+    l->delta = xrealloc(l->delta, inputs * l->batch * sizeof(float));
+    l->output = xrealloc(l->output, inputs * l->batch * sizeof(float));
 #ifdef GPU
     cuda_free(l->delta_gpu);
     cuda_free(l->output_gpu);

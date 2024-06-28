@@ -1,7 +1,6 @@
 #include "utils.h"
 #include "crop_layer.h"
 #include "dark_cuda.h"
-#include <stdio.h>
 
 image get_crop_image(crop_layer l)
 {
@@ -33,16 +32,16 @@ crop_layer make_crop_layer(int batch, int h, int w, int c, int crop_height, int 
     l.out_c = c;
     l.inputs = l.w * l.h * l.c;
     l.outputs = l.out_w * l.out_h * l.out_c;
-    l.output = (float*)xcalloc(l.outputs * batch, sizeof(float));
+    l.output = xcalloc(l.outputs * batch, sizeof(float));
     l.forward = forward_crop_layer;
     l.backward = backward_crop_layer;
 
-    #ifdef GPU
+#ifdef GPU
     l.forward_gpu = forward_crop_layer_gpu;
     l.backward_gpu = backward_crop_layer_gpu;
     l.output_gpu = cuda_make_array(l.output, l.outputs*batch);
     l.rand_gpu   = cuda_make_array(0, l.batch*8);
-    #endif
+#endif
     return l;
 }
 
@@ -57,11 +56,11 @@ void resize_crop_layer(layer *l, int w, int h)
     l->inputs = l->w * l->h * l->c;
     l->outputs = l->out_h * l->out_w * l->out_c;
 
-    l->output = (float*)xrealloc(l->output, l->batch * l->outputs * sizeof(float));
-    #ifdef GPU
+    l->output = xrealloc(l->output, l->batch * l->outputs * sizeof(float));
+#ifdef GPU
     cuda_free(l->output_gpu);
     l->output_gpu = cuda_make_array(l->output, l->outputs*l->batch);
-    #endif
+#endif
 }
 
 
