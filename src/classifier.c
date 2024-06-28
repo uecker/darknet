@@ -32,7 +32,9 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
     int i;
 
     float avg_loss = -1;
-    //float avg_contrastive_acc = 0;
+#ifdef OPENCV
+    float avg_contrastive_acc = 0;
+#endif
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -186,8 +188,9 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
                 else fprintf(stderr, " Tensor Cores are used.\n");
             }
         }
-
-        //int draw_precision = 0;
+#ifdef OPENCV
+        int draw_precision = 0;
+#endif
         if (calc_topk && (i >= calc_topk_for_each || i == net.max_batches)) {
             iter_topk = i;
             if (net.contrastive && l.type != SOFTMAX && l.type != COST) {
@@ -200,7 +203,9 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
                 topk = validate_classifier_single(datacfg, cfgfile, weightfile, &net, topk_data); // calc TOP-n
                 printf("\n accuracy %s = %f \n", topk_buff, topk);
             }
-            // draw_precision = 1;
+#ifdef OPENCV
+            draw_precision = 1;
+#endif
         }
 
         time_remaining = ((net.max_batches - i) / ngpus) * (what_time_is_it_now() - start) / 60 / 60;
@@ -1280,7 +1285,7 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
     int frame_counter = 0;
 
     while(1){
-        struct timeval tval_before, tval_after, tval_result;
+        struct timeval tval_before /*, tval_after, tval_result */;
         gettimeofday(&tval_before, NULL);
 
         //image in = get_image_from_stream(cap);

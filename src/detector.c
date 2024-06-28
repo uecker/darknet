@@ -61,7 +61,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     float avg_loss = -1;
-    // float avg_contrastive_acc = 0;
+#ifdef OPENCV
+    float avg_contrastive_acc = 0;
+#endif
     network* nets = (network*)xcalloc(ngpus, sizeof(network));
 
     srand(time(0));
@@ -324,7 +326,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         }
         printf("\n %d: %f, %f avg loss, %f rate, %lf seconds, %d images, %f hours left\n", iteration, loss, avg_loss, get_current_rate(net), (what_time_is_it_now() - time), iteration*imgs, avg_time);
         fflush(stdout);
-
+#ifdef OPENCV
+	int draw_precision = 0;
+#endif
         if (calc_map && (iteration >= next_map_calc || iteration == net.max_batches)) {
             if (l.random) {
                 printf("Resizing to initial size: %d x %d ", init_w, init_h);
@@ -370,8 +374,9 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
                 sprintf(buff, "%s/%s_best.weights", backup_directory, base);
                 save_weights(net, buff);
             }
-
-            // draw_precision = 1;
+#ifdef OPENCV
+            draw_precision = 1;
+#endif
         }
         time_remaining = ((net.max_batches - iteration) / ngpus)*(what_time_is_it_now() - time + load_time) / 60 / 60;
         // set initial value, even if resume training from 10000 iteration
@@ -1799,14 +1804,14 @@ void draw_object(char *datacfg, char *cfgfile, char *weightfile, char *filename,
     }
 
     srand(2222222);
-    char buff[256];
+    char buff[256] = { 0 };
     char *input = buff;
 
     int j;
     float nms = .45;    // 0.4F
     while (1) {
         if (filename) {
-            strncpy(input, filename, 256);
+            strncpy(input, filename, sizeof buff - 1);
             if (strlen(input) > 0)
                 if (input[strlen(input) - 1] == 0x0d) input[strlen(input) - 1] = 0;
         }
@@ -1868,7 +1873,7 @@ void draw_object(char *datacfg, char *cfgfile, char *weightfile, char *filename,
             float avg_loss = get_network_cost(net);
             draw_train_loss(windows_name, img, img_size, avg_loss, max_img_loss, iteration, it_num, 0, 0, "mAP%", 0, dont_show, 0, 0);
 
-            float inv_loss = 1.0 / max_val_cmp(0.01, avg_loss);
+            //float inv_loss = 1.0 / max_val_cmp(0.01, avg_loss);
             //net.learning_rate = *lr_set * inv_loss;
 
             if (*boxonly) {

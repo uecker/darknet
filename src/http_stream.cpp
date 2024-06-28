@@ -471,7 +471,7 @@ public:
 #endif
             if (s == sock) // request on master socket, accept and send main header.
             {
-                SOCKADDR_IN address = { 0 };
+                SOCKADDR_IN address = { };
                 SOCKET      client = ::accept(sock, (SOCKADDR*)&address, &addrlen);
                 if (client == SOCKET_ERROR)
                 {
