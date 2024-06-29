@@ -118,10 +118,10 @@ void test_writing(char *cfgfile, char *weightfile, char *filename)
 
         show_image(pred, "prediction");
         show_image(im, "orig");
-
+#if 0
         wait_until_press_key_cv();
         destroy_all_windows_cv();
-
+#endif
         free_image(upsampled);
         free_image(thresh);
         free_image(im);

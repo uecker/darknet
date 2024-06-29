@@ -3,6 +3,8 @@
 #include "dark_cuda.h"
 #include "utils.h"
 #include "gemm.h"
+
+#include <float.h>
 #include <stdio.h>
 
 image get_maxpool_image(maxpool_layer l)

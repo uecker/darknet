@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
+#include <float.h>
 
 #include "network.h"
 #include "image.h"
@@ -419,7 +420,7 @@ float train_network_waitkey(network net, data d, int wait_key)
         net.current_subdivision = i;
         float err = train_network_datum(net, X, y);
         sum += err;
-        if(wait_key) wait_key_cv(5);
+        // if(wait_key) wait_key_cv(5);
     }
     (*net.cur_iteration) += 1;
 #ifdef GPU

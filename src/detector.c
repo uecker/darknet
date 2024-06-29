@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <float.h>
+
 #include "darknet.h"
 #include "network.h"
 #include "region_layer.h"
@@ -1753,12 +1755,12 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         free_detections(dets, nboxes);
         free_image(im);
         free_image(sized);
-
+#if 0
         if (!dont_show) {
             wait_until_press_key_cv();
             destroy_all_windows_cv();
         }
-
+#endif
         if (filename) break;
     }
 

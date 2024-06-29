@@ -9,6 +9,7 @@
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
 #endif
+#include <float.h>
 #include <math.h>
 
 #ifndef STB_IMAGE_IMPLEMENTATION

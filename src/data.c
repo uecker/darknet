@@ -4,6 +4,7 @@
 #include "dark_cuda.h"
 #include "box.h"
 
+#include <float.h>
 #include <unistd.h>
 
 #define NUMCHARS 37
@@ -1336,7 +1337,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int c, int bo
                     //sprintf(buff_src, "src_%d_%d_%s_%d", random_index, i, basecfg((char*)filename), random_gen());
                     //show_image_mat(src, buff_src);
                     show_image(tmp_ai, buff);
-                    wait_until_press_key_cv();
+                    // wait_until_press_key_cv();
                 }
                 printf("\nYou use flag -show_imgs, so will be saved aug_...jpg images. Click on window and press ESC button \n");
                 free_image(tmp_ai);
@@ -1543,7 +1544,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int c, int bo
                 save_image(sized, buff);
                 if (show_imgs == 1) {
                     show_image(sized, buff);
-                    wait_until_press_key_cv();
+                    //wait_until_press_key_cv();
                 }
                 printf("\nYou use flag -show_imgs, so will be saved aug_...jpg images\n");
             }
@@ -1980,7 +1981,7 @@ data load_data_augment(char **paths, int n, int m, char **labels, int k, tree *h
 
             if (show_imgs == 1) {
                 show_image(im, buff);
-                wait_until_press_key_cv();
+                //wait_until_press_key_cv();
             }
         }
         printf("\nYou use flag -show_imgs, so will be saved aug_...jpg images. Click on window and press ESC button \n");

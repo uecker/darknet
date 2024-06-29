@@ -2,14 +2,6 @@
 #define IMAGE_H
 #include "darknet.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <float.h>
-#include <string.h>
-#include <math.h>
-
-#include "image_opencv.h"
-
 #include "box.h"
 #ifdef __cplusplus
 extern "C" {

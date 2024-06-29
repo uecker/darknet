@@ -6,10 +6,7 @@
 #include "utils.h"
 
 #include <math.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
+#include <float.h>
 
 layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes, int max_boxes)
 {

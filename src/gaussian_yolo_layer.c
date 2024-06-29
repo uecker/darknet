@@ -11,10 +11,7 @@
 #include "dark_cuda.h"
 #include "utils.h"
 
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
+#include <float.h>
 
 #ifndef M_PI
 #define M_PI 3.141592
